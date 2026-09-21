@@ -16,6 +16,19 @@ dependencies = [
 http = [
     "httpx>=0.28.1",
 ]
+web = [
+    "fastapi>=0.115",
+    "starlette>=0.40",
+]
+gui = [
+    # 6.10 是首个支持 Python 3.14 的 PySide6 版本，下限不可下调
+    "PySide6>=6.10",
+]
+all = [
+    "fdy[http]",
+    "fdy[web]",
+    "fdy[gui]",
+]
 
 [dependency-groups]
 dev = [

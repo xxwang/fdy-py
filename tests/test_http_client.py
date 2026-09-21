@@ -1,4 +1,4 @@
-import builtins
+import sys
 
 import httpx
 import pytest
@@ -143,13 +143,9 @@ def test_negative_retries_are_clamped(monkeypatch):
 
 
 def test_missing_httpx_gives_install_hint(monkeypatch):
-    real_import = builtins.__import__
+    # sys.modules 里塞 None 是模拟「模块存在但不可导入」的可靠手法；
+    # 靠 monkeypatch builtins.__import__ 拦不住 importlib.import_module。
+    monkeypatch.setitem(sys.modules, "httpx", None)
 
-    def fake_import(name, *args, **kwargs):
-        if name == "httpx":
-            raise ImportError("httpx 不可用")
-        return real_import(name, *args, **kwargs)
-
-    monkeypatch.setattr(builtins, "__import__", fake_import)
-    with pytest.raises(ImportError, match="pip install httpx"):
-        http_client._load_httpx()
+    with pytest.raises(ImportError, match=r'pip install "fdy\[http\]"'):
+        http_client.HttpClient().get("https://example.com")

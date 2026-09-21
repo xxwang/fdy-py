@@ -5,6 +5,8 @@ httpx 属于可选依赖：未安装时不影响 `import fdy`，只在真正发�
 
 from typing import Any
 
+from .._optional import require
+
 __all__ = [
     "HttpClient",
     "get_json",
@@ -12,16 +14,6 @@ __all__ = [
 ]
 
 _RETRYABLE_STATUS = 500
-
-
-def _load_httpx() -> Any:
-    try:
-        import httpx
-    except ImportError as exc:
-        raise ImportError(
-            "使用 fdy.http_client 需要先安装 httpx，例如：pip install httpx"
-        ) from exc
-    return httpx
 
 
 class HttpClient:
@@ -41,7 +33,7 @@ class HttpClient:
 
     def request(self, method: str, url: str, **kwargs: Any) -> Any:
         """发起请求，网络错误与 5xx 响应自动重试，其余状态码由 raise_for_status 抛出。"""
-        httpx = _load_httpx()
+        httpx = require("httpx")
         target = f"{self.base_url}{url}" if self.base_url else url
         options: dict[str, Any] = {
             "timeout": self.timeout,

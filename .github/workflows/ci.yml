@@ -6,7 +6,10 @@ on:
   pull_request:
 
 jobs:
-  lint-and-test:
+  # 裸装：不装任何 extra，除了跑 lint 与 core 用例，还顺带验证
+  # 「import fdy 不引入任何框架依赖」这条边界（web / gui 用例在此整体跳过）。
+  core:
+    name: core (无 extra)
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -20,5 +23,28 @@ jobs:
       - run: uv run ruff check src tests
 
       - run: uv run ruff format --check src tests
+
+      - run: uv run pytest -v
+
+  # 全量 extra：真正把 web / gui 的用例跑起来。
+  extras:
+    name: extras (web + gui)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: astral-sh/setup-uv@v3
+
+      - run: uv python install 3.14
+
+      # PySide6 的 wheel 自带 Qt，但仍依赖系统级图形/字体库，
+      # 缺失时 import QtWidgets 会直接失败。
+      - name: 安装 Qt 运行时依赖
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends \
+            libegl1 libgl1 libxkbcommon0 libdbus-1-3 libfontconfig1
+
+      - run: uv sync --all-extras
 
       - run: uv run pytest -v
